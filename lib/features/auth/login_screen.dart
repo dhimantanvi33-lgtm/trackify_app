@@ -5,6 +5,7 @@ import 'package:trackify/features/auth/sign_up_screen.dart';
 import 'package:trackify/features/auth/widgets/bg_glow.dart';
 import 'package:trackify/features/auth/widgets/divider.dart';
 import 'package:trackify/features/auth/widgets/logo_bar.dart';
+import 'package:trackify/features/dashboard/dash_board.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_strings.dart';
@@ -82,7 +83,19 @@ class _LoginScreenState extends State<LoginScreen>
     if (!_validate()) return;
     setState(() => _loading = true);
     await Future.delayed(const Duration(seconds: 2));
-    if (mounted) setState(() => _loading = false);
+    if (!mounted) return;
+    setState(() => _loading = false);
+    Navigator.pushReplacement(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (_, anim, __) => const DashboardScreen(),
+        transitionsBuilder: (_, anim, __, child) => FadeTransition(
+          opacity: CurvedAnimation(parent: anim, curve: Curves.easeOut),
+          child: child,
+        ),
+        transitionDuration: const Duration(milliseconds: 400),
+      ),
+    );
   }
 
   @override
