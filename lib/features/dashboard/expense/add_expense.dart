@@ -1,9 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'package:trackify/core/constants/app_colors.dart';
 import 'package:trackify/features/auth/widgets/bg_glow.dart';
 import 'package:trackify/model/expense_model.dart';
+import 'package:trackify/provider/expense_provider.dart';
 
 class _Category {
   final String label;
@@ -147,10 +149,6 @@ class _AddExpenseScreenState extends State<AddExpenseScreen>
 
   Future<void> _save() async {
     if (!_validate()) return;
-    setState(() => _loading = true);
-    await Future.delayed(const Duration(milliseconds: 800));
-    if (!mounted) return;
-    setState(() => _loading = false);
 
     final expense = ExpenseModel(
       title: _titleCtrl.text.trim(),
@@ -161,7 +159,21 @@ class _AddExpenseScreenState extends State<AddExpenseScreen>
       isExpense: _isExpense,
     );
 
-    Navigator.pop(context, expense);
+    final expenseProvider = context.read<ExpenseProvider>();
+    final success = await expenseProvider.addExpense(expense);
+
+    if (!mounted) return;
+
+    if (success) {
+      Navigator.pop(context, true);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(expenseProvider.errorMessage ?? 'Failed to save transaction'),
+          backgroundColor: Colors.redAccent.shade200,
+        ),
+      );
+    }
   }
 
   String _formatDate(DateTime d) {
@@ -181,6 +193,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isSaving = context.watch<ExpenseProvider>().isSaving;
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: Stack(
@@ -297,10 +310,8 @@ class _AddExpenseScreenState extends State<AddExpenseScreen>
                             // ── Save button ──────────────────────────────
                             _SaveButton(
                               label: 'Save Transaction',
-                              isLoading: _loading,
-                              color: _isExpense
-                                  ? const Color(0xFFF87171)
-                                  : const Color(0xFF4ADE80),
+                              isLoading: isSaving,
+                              color: _isExpense ? const Color(0xFFF87171) : const Color(0xFF4ADE80),
                               onTap: _save,
                             ),
 
