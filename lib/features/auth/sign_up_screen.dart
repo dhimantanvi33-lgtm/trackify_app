@@ -1,7 +1,7 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:trackify/features/auth/widgets/bg_glow.dart';
-import 'package:trackify/features/auth/widgets/divider.dart';
+import 'package:trackify/provider/auth_provider.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_strings.dart';
@@ -21,7 +21,6 @@ class _SignupScreenState extends State<SignupScreen>
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   final _confirmCtrl = TextEditingController();
-  bool _loading = false;
   bool _agreed = false;
 
   String? _nameError;
@@ -33,7 +32,6 @@ class _SignupScreenState extends State<SignupScreen>
   late final Animation<double> _fadeAnim;
   late final Animation<Offset> _slideAnim;
 
-  // Password strength
   double _passStrength = 0;
   String _passStrengthLabel = '';
   Color _passStrengthColor = AppColors.muted;
@@ -46,11 +44,15 @@ class _SignupScreenState extends State<SignupScreen>
       duration: const Duration(milliseconds: 700),
     )..forward();
     _fadeAnim = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _enterAnim, curve: const Interval(0, 0.6, curve: Curves.easeOut)),
+      CurvedAnimation(
+        parent: _enterAnim,
+        curve: const Interval(0, 0.6, curve: Curves.easeOut),
+      ),
     );
-    _slideAnim = Tween<Offset>(begin: const Offset(0, 0.06), end: Offset.zero).animate(
-      CurvedAnimation(parent: _enterAnim, curve: Curves.easeOut),
-    );
+    _slideAnim =
+        Tween<Offset>(begin: const Offset(0, 0.06), end: Offset.zero).animate(
+          CurvedAnimation(parent: _enterAnim, curve: Curves.easeOut),
+        );
   }
 
   @override
@@ -115,19 +117,32 @@ class _SignupScreenState extends State<SignupScreen>
         _confirmError = 'Passwords do not match';
         valid = false;
       }
+      if (!_agreed) {
+        valid = false;
+      }
     });
     return valid;
   }
 
   Future<void> _signup() async {
     if (!_validate()) return;
-    setState(() => _loading = true);
-    await Future.delayed(const Duration(seconds: 2));
-    if (mounted) setState(() => _loading = false);
+
+    final auth = context.read<AuthProvider>();
+    final success = await auth.signUp(
+      name: _nameCtrl.text,
+      email: _emailCtrl.text,
+      password: _passCtrl.text,
+    );
+
+    if (!mounted || !success) return;
+
+    Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: Stack(
@@ -145,7 +160,6 @@ class _SignupScreenState extends State<SignupScreen>
                     children: [
                       const SizedBox(height: 20),
 
-                      // Back button
                       GestureDetector(
                         onTap: () => Navigator.pop(context),
                         child: Container(
@@ -166,7 +180,6 @@ class _SignupScreenState extends State<SignupScreen>
 
                       const SizedBox(height: 24),
 
-                      // Title
                       const Text(
                         AppStrings.signupTitle,
                         style: TextStyle(
@@ -190,7 +203,6 @@ class _SignupScreenState extends State<SignupScreen>
 
                       const SizedBox(height: 32),
 
-                      // Full name
                       TrackifyTextField(
                         hint: AppStrings.fullNameHint,
                         prefixIcon: Icons.person_outline_rounded,
@@ -201,19 +213,20 @@ class _SignupScreenState extends State<SignupScreen>
 
                       const SizedBox(height: 16),
 
-                      // Email
                       TrackifyTextField(
                         hint: AppStrings.emailHint,
                         prefixIcon: Icons.email_outlined,
                         controller: _emailCtrl,
                         keyboardType: TextInputType.emailAddress,
                         errorText: _emailError,
-                        onChanged: (_) => setState(() => _emailError = null),
+                        onChanged: (_) {
+                          setState(() => _emailError = null);
+                          auth.clearError();
+                        },
                       ),
 
                       const SizedBox(height: 16),
 
-                      // Password
                       TrackifyTextField(
                         hint: AppStrings.passwordHint,
                         prefixIcon: Icons.lock_outline_rounded,
@@ -222,11 +235,11 @@ class _SignupScreenState extends State<SignupScreen>
                         errorText: _passError,
                         onChanged: (v) {
                           setState(() => _passError = null);
+                          auth.clearError();
                           _checkStrength(v);
                         },
                       ),
 
-                      // Password strength bar
                       if (_passCtrl.text.isNotEmpty) ...[
                         const SizedBox(height: 10),
                         Row(
@@ -237,7 +250,8 @@ class _SignupScreenState extends State<SignupScreen>
                                 child: LinearProgressIndicator(
                                   value: _passStrength,
                                   backgroundColor: AppColors.inputBorder,
-                                  valueColor: AlwaysStoppedAnimation(_passStrengthColor),
+                                  valueColor:
+                                  AlwaysStoppedAnimation(_passStrengthColor),
                                   minHeight: 4,
                                 ),
                               ),
@@ -258,7 +272,6 @@ class _SignupScreenState extends State<SignupScreen>
 
                       const SizedBox(height: 16),
 
-                      // Confirm password
                       TrackifyTextField(
                         hint: AppStrings.confirmPasswordHint,
                         prefixIcon: Icons.lock_outline_rounded,
@@ -279,9 +292,31 @@ class _SignupScreenState extends State<SignupScreen>
                             : null,
                       ),
 
+                      // General Firebase auth error (email already in use, weak password, etc.)
+                      if (auth.status == AuthStatus.error &&
+                          auth.errorMessage != null) ...[
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Icon(Icons.error_outline_rounded,
+                                size: 14, color: Colors.redAccent.shade200),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                auth.errorMessage!,
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 13,
+                                  color: Colors.redAccent.shade200,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+
                       const SizedBox(height: 20),
 
-                      // Terms checkbox
                       GestureDetector(
                         onTap: () => setState(() => _agreed = !_agreed),
                         child: Row(
@@ -293,14 +328,18 @@ class _SignupScreenState extends State<SignupScreen>
                               height: 22,
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(6),
-                                color: _agreed ? AppColors.accent : Colors.transparent,
+                                color:
+                                _agreed ? AppColors.accent : Colors.transparent,
                                 border: Border.all(
-                                  color: _agreed ? AppColors.accent : AppColors.inputBorder,
+                                  color: _agreed
+                                      ? AppColors.accent
+                                      : AppColors.inputBorder,
                                   width: 1.5,
                                 ),
                               ),
                               child: _agreed
-                                  ? const Icon(Icons.check_rounded, color: Colors.white, size: 14)
+                                  ? const Icon(Icons.check_rounded,
+                                  color: Colors.white, size: 14)
                                   : null,
                             ),
                             const SizedBox(width: 10),
@@ -317,12 +356,16 @@ class _SignupScreenState extends State<SignupScreen>
                                     TextSpan(text: 'I agree to the '),
                                     TextSpan(
                                       text: 'Terms of Service',
-                                      style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w600),
+                                      style: TextStyle(
+                                          color: AppColors.accent,
+                                          fontWeight: FontWeight.w600),
                                     ),
                                     TextSpan(text: ' and '),
                                     TextSpan(
                                       text: 'Privacy Policy',
-                                      style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w600),
+                                      style: TextStyle(
+                                          color: AppColors.accent,
+                                          fontWeight: FontWeight.w600),
                                     ),
                                   ],
                                 ),
@@ -334,39 +377,26 @@ class _SignupScreenState extends State<SignupScreen>
 
                       const SizedBox(height: 28),
 
-                      // Signup button
                       TrackifyButton(
                         label: AppStrings.signupBtn,
-                        isLoading: _loading,
+                        isLoading: auth.isLoading,
                         onPressed: _signup,
-                      ),
-
-                      const SizedBox(height: 26),
-
-                      // Divider
-                      const OrDivider(),
-
-                      const SizedBox(height: 20),
-
-                      // Google
-                      TrackifyButton(
-                        label: AppStrings.googleBtn,
-                        outlined: true,
-                        prefixIcon: Icons.g_mobiledata_rounded,
-                        onPressed: () {},
                       ),
 
                       const SizedBox(height: 32),
 
-                      // Login link
                       Center(
                         child: GestureDetector(
                           onTap: () => Navigator.pop(context),
                           child: RichText(
                             text: const TextSpan(
-                              style: TextStyle(fontFamily: 'Inter', fontSize: 14),
+                              style:
+                              TextStyle(fontFamily: 'Inter', fontSize: 14),
                               children: [
-                                TextSpan(text: AppStrings.hasAccount, style: TextStyle(color: AppColors.muted)),
+                                TextSpan(
+                                  text: AppStrings.hasAccount,
+                                  style: TextStyle(color: AppColors.muted),
+                                ),
                                 TextSpan(
                                   text: AppStrings.loginLink,
                                   style: TextStyle(

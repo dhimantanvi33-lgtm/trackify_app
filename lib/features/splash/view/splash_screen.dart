@@ -1,7 +1,7 @@
 import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:trackify/features/auth/login_screen.dart';
+import 'package:trackify/features/auth/auth_gate.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/widgets/custom_button.dart';
@@ -356,7 +356,7 @@ class _SplashScreenState extends State<SplashScreen>
                               Navigator.push(
                                 context,
                                 PageRouteBuilder(
-                                  pageBuilder: (_, anim, __) => const LoginScreen(),
+                                  pageBuilder: (_, anim, __) => const AuthGate(),
                                   transitionsBuilder: (_, anim, __, child) {
                                     return SlideTransition(
                                       position: Tween<Offset>(
