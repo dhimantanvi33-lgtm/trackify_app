@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:trackify/features/auth/widgets/bg_glow.dart';
+import 'package:trackify/features/dashboard/bills/bills_screen.dart';
 import 'package:trackify/features/dashboard/expense/add_expense.dart';
+import 'package:trackify/features/dashboard/stats/stats_screen.dart';
 import 'package:trackify/features/dashboard/widgets/bidget_progress.dart';
 import 'package:trackify/features/dashboard/widgets/dash_board_header.dart';
 import 'package:trackify/features/dashboard/widgets/rescent_transactions.dart';
@@ -262,8 +264,22 @@ class _BottomNavState extends State<_BottomNav> {
           }
 
           final isSelected = _selected == i;
-          return GestureDetector(
-            onTap: () => setState(() => _selected = i),
+          return  GestureDetector(
+            onTap: () {
+              if (i == 1) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const StatsScreen()),
+                );
+              } else if (i == 3) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const BillsScreen()),
+                );
+              } else {
+                setState(() => _selected = i);
+              }
+            },
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -280,8 +296,7 @@ class _BottomNavState extends State<_BottomNav> {
                   style: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 10,
-                    fontWeight:
-                    isSelected ? FontWeight.w600 : FontWeight.w400,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                     color: isSelected
                         ? AppColors.accent
                         : AppColors.muted.withOpacity(0.5),
