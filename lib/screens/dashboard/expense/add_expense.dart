@@ -153,7 +153,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen>
     final expense = ExpenseModel(
       title: _titleCtrl.text.trim(),
       amount: double.parse(_amountCtrl.text.trim()),
-      category: _categories[_selectedCategory].label,
+      category: _isExpense ? _categories[_selectedCategory].label : 'Income',
       date: _selectedDate,
       note: _noteCtrl.text.trim().isEmpty ? null : _noteCtrl.text.trim(),
       isExpense: _isExpense,
@@ -175,7 +175,6 @@ class _AddExpenseScreenState extends State<AddExpenseScreen>
       );
     }
   }
-
   String _formatDate(DateTime d) {
     if (_isSameDay(d, DateTime.now())) return 'Today';
     if (_isSameDay(d, DateTime.now().subtract(const Duration(days: 1)))) {
@@ -260,14 +259,17 @@ class _AddExpenseScreenState extends State<AddExpenseScreen>
                             const SizedBox(height: 24),
 
                             // ── Category picker ──────────────────────────
-                            _SectionLabel(label: 'Category'),
-                            const SizedBox(height: 12),
-                            _CategoryGrid(
-                              categories: _categories,
-                              selected: _selectedCategory,
-                              onSelect: (i) =>
-                                  setState(() => _selectedCategory = i),
-                            ),
+                            if (_isExpense) ...[
+                              _SectionLabel(label: 'Category'),
+                              const SizedBox(height: 12),
+                              _CategoryGrid(
+                                categories: _categories,
+                                selected: _selectedCategory,
+                                onSelect: (i) =>
+                                    setState(() => _selectedCategory = i),
+                              ),
+                              const SizedBox(height: 24),
+                            ],
 
                             const SizedBox(height: 24),
 

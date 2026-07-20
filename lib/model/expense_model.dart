@@ -6,6 +6,7 @@ class ExpenseModel {
   final double amount;
   final String category;
   final DateTime date;
+  final DateTime? createdAt;
   final String? note;
   final bool isExpense;
 
@@ -15,6 +16,7 @@ class ExpenseModel {
     required this.amount,
     required this.category,
     required this.date,
+    this.createdAt,
     this.note,
     required this.isExpense,
   });
@@ -25,9 +27,11 @@ class ExpenseModel {
       'amount': amount,
       'category': category,
       'date': Timestamp.fromDate(date),
+      'createdAt': createdAt != null
+          ? Timestamp.fromDate(createdAt!)
+          : FieldValue.serverTimestamp(),
       'note': note,
       'isExpense': isExpense,
-      'createdAt': FieldValue.serverTimestamp(),
     };
   }
 
@@ -35,9 +39,10 @@ class ExpenseModel {
     return ExpenseModel(
       id: id,
       title: map['title'] as String? ?? '',
-      amount: (map['amount'] as num?)?.toDouble() ?? 0,
+      amount: (map['amount'] as num?)?.toDouble() ?? 0.0,
       category: map['category'] as String? ?? 'Other',
       date: (map['date'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      createdAt: (map['createdAt'] as Timestamp?)?.toDate(),
       note: map['note'] as String?,
       isExpense: map['isExpense'] as bool? ?? true,
     );
@@ -49,6 +54,7 @@ class ExpenseModel {
     double? amount,
     String? category,
     DateTime? date,
+    DateTime? createdAt,
     String? note,
     bool? isExpense,
   }) {
@@ -58,6 +64,7 @@ class ExpenseModel {
       amount: amount ?? this.amount,
       category: category ?? this.category,
       date: date ?? this.date,
+      createdAt: createdAt ?? this.createdAt,
       note: note ?? this.note,
       isExpense: isExpense ?? this.isExpense,
     );

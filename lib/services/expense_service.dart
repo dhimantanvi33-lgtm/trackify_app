@@ -35,28 +35,11 @@ class ExpenseService {
 
   Future<String> addExpense(ExpenseModel expense) async {
     try {
-      debugPrint("========== ADD EXPENSE ==========");
-      debugPrint("Current User: ${_firebaseAuth.currentUser?.uid}");
-      debugPrint("Expense Data: ${expense.toMap()}");
-
       final doc = await _expensesRef.add(expense.toMap());
-
-      debugPrint("Expense Added Successfully");
-      debugPrint("Document ID: ${doc.id}");
-
       return doc.id;
     } on FirebaseException catch (e, stackTrace) {
-      debugPrint("FirebaseException in addExpense");
-      debugPrint("Code: ${e.code}");
-      debugPrint("Message: ${e.message}");
-      debugPrint("StackTrace: $stackTrace");
-
       throw ExpenseException(e.message ?? 'Failed to save transaction');
     } catch (e, stackTrace) {
-      debugPrint("Unknown Error in addExpense");
-      debugPrint(e.toString());
-      debugPrint(stackTrace.toString());
-
       rethrow;
     }
   }

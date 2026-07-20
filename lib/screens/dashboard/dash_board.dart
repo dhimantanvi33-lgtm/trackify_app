@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:trackify/features/auth/widgets/bg_glow.dart';
 import 'package:trackify/features/dashboard/bills/bills_screen.dart';
 import 'package:trackify/features/dashboard/expense/add_expense.dart';
-import 'package:trackify/features/dashboard/stats/stats_screen.dart';
+import 'package:trackify/features/dashboard/monthlyBudget/set_monthly_budget_screen.dart';
+import 'package:trackify/features/dashboard/profile/profile.dart';
 import 'package:trackify/features/dashboard/widgets/bidget_progress.dart';
 import 'package:trackify/features/dashboard/widgets/dash_board_header.dart';
 import 'package:trackify/features/dashboard/widgets/rescent_transactions.dart';
+import 'package:trackify/provider/dashboard_provider.dart';
+import 'package:trackify/features/dashboard/widgets/expense_pie_chart.dart';
 
 import '../../core/constants/app_colors.dart';
 import 'widgets/balance_card.dart';
-import 'widgets/expense_pie_chart.dart';
 
 import 'widgets/spending_line_chart.dart';
 
@@ -25,77 +28,6 @@ class _DashboardScreenState extends State<DashboardScreen>
   late final AnimationController _enterAnim;
   late final Animation<double> _fadeAnim;
   late final Animation<Offset> _slideAnim;
-
-
-  static const _categories = [
-    ExpenseCategory(
-      label: 'Food',
-      percentage: 40,
-      color: Color(0xFF818CF8),
-      icon: Icons.restaurant_outlined,
-    ),
-    ExpenseCategory(
-      label: 'Travel',
-      percentage: 25,
-      color: Color(0xFF38BDF8),
-      icon: Icons.directions_transit_outlined,
-    ),
-    ExpenseCategory(
-      label: 'Shopping',
-      percentage: 20,
-      color: Color(0xFFFBBF24),
-      icon: Icons.shopping_bag_outlined,
-    ),
-    ExpenseCategory(
-      label: 'Bills',
-      percentage: 15,
-      color: Color(0xFFF87171),
-      icon: Icons.receipt_long_outlined,
-    ),
-  ];
-
-  static const _transactions = [
-    TransactionItem(
-      title: 'Swiggy Order',
-      category: 'Food',
-      amount: 500,
-      isExpense: true,
-      icon: Icons.restaurant_outlined,
-      iconColor: Color(0xFF818CF8),
-      time: '2h ago',
-    ),
-    TransactionItem(
-      title: 'Metro Card',
-      category: 'Travel',
-      amount: 200,
-      isExpense: true,
-      icon: Icons.directions_transit_outlined,
-      iconColor: Color(0xFF38BDF8),
-      time: '5h ago',
-    ),
-    TransactionItem(
-      title: 'Amazon',
-      category: 'Shopping',
-      amount: 1000,
-      isExpense: true,
-      icon: Icons.shopping_bag_outlined,
-      iconColor: Color(0xFFFBBF24),
-      time: 'Yesterday',
-    ),
-    TransactionItem(
-      title: 'Salary Credit',
-      category: 'Income',
-      amount: 35000,
-      isExpense: false,
-      icon: Icons.account_balance_wallet_outlined,
-      iconColor: Color(0xFF4ADE80),
-      time: '2 days ago',
-    ),
-  ];
-
-  static final _weeklySpend = [3200.0, 1800.0, 4500.0, 2100.0, 3800.0, 1500.0, 2700.0];
-  static const _weekLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
 
   @override
   void initState() {
@@ -115,16 +47,23 @@ class _DashboardScreenState extends State<DashboardScreen>
         Tween<Offset>(begin: const Offset(0, 0.04), end: Offset.zero).animate(
           CurvedAnimation(parent: _enterAnim, curve: Curves.easeOut),
         );
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<DashboardProvider>().startListening();
+    });
   }
 
   @override
   void dispose() {
     _enterAnim.dispose();
+    context.read<DashboardProvider>().stopListening();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final dashboard = context.watch<DashboardProvider>();
+
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: Stack(
@@ -136,8 +75,8 @@ class _DashboardScreenState extends State<DashboardScreen>
               child: SlideTransition(
                 position: _slideAnim,
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 20, vertical: 24),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -146,40 +85,29 @@ class _DashboardScreenState extends State<DashboardScreen>
                         onNotificationTap: () {},
                         onAvatarTap: () {},
                       ),
-
                       const SizedBox(height: 28),
-
-                      const BalanceCard(
-                        totalBalance: 25000,
-                        income: 35000,
-                        expense: 10000,
+                      BalanceCard(
+                        totalBalance: dashboard.totalBalance,
+                        income: dashboard.totalIncome,
+                        expense: dashboard.totalExpense,
                       ),
-
                       const SizedBox(height: 20),
-
-                      const ExpensePieChart(categories: _categories),
-
+                      ExpensePieChart(categories: dashboard.categoryBreakdown),
                       const SizedBox(height: 20),
-
                       MonthlySpendingChart(
-                        weeklyData: _weeklySpend,
-                        labels: _weekLabels,
+                        weeklyData: dashboard.weeklySpend,
+                        labels: DashboardProvider.weekLabels,
                       ),
-
                       const SizedBox(height: 20),
-
                       RecentTransactions(
-                        transactions: _transactions,
+                        transactions: dashboard.recentTransactions,
                         onViewAll: () {},
                       ),
-
                       const SizedBox(height: 20),
-
-                      const BudgetProgress(
-                        spent: 10000,
-                        total: 15000,
+                      BudgetProgress(
+                        spent: dashboard.totalExpense,
+                        total: 15000, // still hardcoded — see note below
                       ),
-
                       const SizedBox(height: 32),
                     ],
                   ),
@@ -189,7 +117,6 @@ class _DashboardScreenState extends State<DashboardScreen>
           ),
         ],
       ),
-
       bottomNavigationBar: _BottomNav(),
     );
   }
@@ -205,7 +132,7 @@ class _BottomNavState extends State<_BottomNav> {
 
   static const _items = [
     (icon: Icons.home_rounded, label: 'Home'),
-    (icon: Icons.bar_chart_rounded, label: 'Stats'),
+    (icon: Icons.savings_outlined, label: 'Budget'),
     (icon: Icons.add_circle_rounded, label: ''),
     (icon: Icons.receipt_long_outlined, label: 'Bills'),
     (icon: Icons.person_outline_rounded, label: 'Profile'),
@@ -264,17 +191,22 @@ class _BottomNavState extends State<_BottomNav> {
           }
 
           final isSelected = _selected == i;
-          return  GestureDetector(
+          return GestureDetector(
             onTap: () {
               if (i == 1) {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const StatsScreen()),
+                  MaterialPageRoute(builder: (_) => const SetMonthlyBudgetScreen()),
                 );
               } else if (i == 3) {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const BillsScreen()),
+                );
+              } else if (i == 4) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ProfileScreen()),
                 );
               } else {
                 setState(() => _selected = i);
