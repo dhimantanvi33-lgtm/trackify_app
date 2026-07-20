@@ -3,10 +3,11 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:trackify/firebase_options.dart';
 import 'package:trackify/provider/auth_provider.dart';
+import 'package:trackify/provider/budget_provider.dart';
 import 'package:trackify/provider/dashboard_provider.dart';
 import 'package:trackify/provider/expense_provider.dart';
+import 'package:trackify/screens/splash/view/splash_screen.dart';
 
-import 'features/splash/view/splash_screen.dart';
 
 import 'package:provider/provider.dart';
 
@@ -34,6 +35,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => DashboardProvider()),
         ChangeNotifierProvider(create: (_) => ExpenseProvider()),
+        ChangeNotifierProvider(create: (_) => BudgetProvider()),
       ],
       child: const MyApp(),
     ),

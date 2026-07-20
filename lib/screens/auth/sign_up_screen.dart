@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:trackify/features/auth/widgets/bg_glow.dart';
 import 'package:trackify/provider/auth_provider.dart';
+import 'package:trackify/screens/auth/widgets/bg_glow.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_strings.dart';

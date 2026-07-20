@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:trackify/core/constants/app_colors.dart';
-import 'package:trackify/features/auth/widgets/bg_glow.dart';
+import 'package:trackify/screens/auth/widgets/bg_glow.dart';
+import 'package:trackify/screens/dashboard/bills/add_bills.dart';
 
 enum _BillStatus { paid, due, overdue }
 
@@ -39,7 +40,7 @@ class _BillsScreenState extends State<BillsScreen>
   late final Animation<double> _fadeAnim;
   late final Animation<Offset> _slideAnim;
 
-  int _filterIndex = 0; // 0 = All, 1 = Upcoming, 2 = Paid
+  int _filterIndex = 0;
 
   static const _filters = ['All', 'Upcoming', 'Paid'];
 
@@ -189,7 +190,6 @@ class _BillsScreenState extends State<BillsScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // ── Header ─────────────────────────────────────
                       Row(
                         children: [
                           const Text(
@@ -204,7 +204,26 @@ class _BillsScreenState extends State<BillsScreen>
                           const Spacer(),
                           _IconBtn(
                             icon: Icons.add_rounded,
-                            onTap: () {},
+                            onTap: () async {
+                              final result = await Navigator.push<AddBillResult>(
+                                context,
+                                MaterialPageRoute(builder: (_) => const AddBillScreen()),
+                              );
+                              if (result != null) {
+                                setState(() {
+                                  _bills.add(_Bill(
+                                    title: result.title,
+                                    category: result.category,
+                                    amount: result.amount,
+                                    dueDate: result.dueDate,
+                                    icon: result.icon,
+                                    color: result.color,
+                                    isRecurring: result.isRecurring,
+                                    status: _BillStatus.due,
+                                  ));
+                                });
+                              }
+                            },
                           ),
                         ],
                       ),

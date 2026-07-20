@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:trackify/features/dashboard/widgets/expense_pie_chart.dart';
-import 'package:trackify/features/dashboard/widgets/rescent_transactions.dart';
 import 'package:trackify/model/category.dart';
 import 'package:trackify/model/expense_model.dart';
+import 'package:trackify/screens/dashboard/widgets/expense_pie_chart.dart';
+import 'package:trackify/screens/dashboard/widgets/rescent_transactions.dart';
 import 'package:trackify/services/dashboard_service.dart';
 
 enum DashboardStatus { idle, loading, error }

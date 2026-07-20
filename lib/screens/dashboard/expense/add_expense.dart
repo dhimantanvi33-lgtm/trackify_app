@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:trackify/core/constants/app_colors.dart';
-import 'package:trackify/features/auth/widgets/bg_glow.dart';
 import 'package:trackify/model/expense_model.dart';
 import 'package:trackify/provider/expense_provider.dart';
+import 'package:trackify/screens/auth/widgets/bg_glow.dart';
 
 class _Category {
   final String label;

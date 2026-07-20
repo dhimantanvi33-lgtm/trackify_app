@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:trackify/screens/auth/widgets/ripple_painter.dart';
+import 'package:trackify/screens/auth/widgets/shimmer_painter.dart';
 
-import '../../features/auth/widgets/ripple_painter.dart';
-import '../../features/auth/widgets/shimmer_painter.dart';
+
 import '../constants/app_colors.dart';
 
 class TrackifyButton extends StatefulWidget {
@@ -28,7 +29,6 @@ class _TrackifyButtonState extends State<TrackifyButton>
     with SingleTickerProviderStateMixin {
   bool _pressed = false;
 
-  // ✅ Use public RippleData (from ripple_painter.dart), not _RippleData
   final List<RippleData> _ripples = [];
 
   late final AnimationController _shimmer;
@@ -55,12 +55,10 @@ class _TrackifyButtonState extends State<TrackifyButton>
   void _addRipple(TapDownDetails d) {
     final id = DateTime.now().microsecondsSinceEpoch;
 
-    // ✅ Use public RippleData constructor
     setState(() => _ripples.add(RippleData(offset: d.localPosition, id: id)));
 
     Future.delayed(const Duration(milliseconds: 600), () {
       if (mounted) {
-        // ✅ Access .id directly — no null issue since list holds RippleData, not RippleData?
         setState(() => _ripples.removeWhere((r) => r.id == id));
       }
     });
@@ -151,7 +149,6 @@ class _TrackifyButtonState extends State<TrackifyButton>
                     tween: Tween(begin: 0.0, end: 1.0),
                     duration: const Duration(milliseconds: 600),
                     builder: (_, val, __) => CustomPaint(
-                      // ✅ r.offset and r.id are non-null — RippleData fields are required
                       painter: RipplePainter(r.offset, val),
                     ),
                   ),

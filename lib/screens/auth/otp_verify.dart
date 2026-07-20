@@ -2,8 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:trackify/features/auth/widgets/bg_glow.dart';
-import 'package:trackify/features/auth/widgets/logo_bar.dart';
+import 'package:trackify/screens/auth/widgets/bg_glow.dart';
+import 'package:trackify/screens/auth/widgets/logo_bar.dart';
+
 
 import '../../core/constants/app_colors.dart';
 import '../../core/widgets/custom_button.dart';

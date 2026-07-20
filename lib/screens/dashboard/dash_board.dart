@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:trackify/features/auth/widgets/bg_glow.dart';
-import 'package:trackify/features/dashboard/bills/bills_screen.dart';
-import 'package:trackify/features/dashboard/expense/add_expense.dart';
-import 'package:trackify/features/dashboard/monthlyBudget/set_monthly_budget_screen.dart';
-import 'package:trackify/features/dashboard/profile/profile.dart';
-import 'package:trackify/features/dashboard/widgets/bidget_progress.dart';
-import 'package:trackify/features/dashboard/widgets/dash_board_header.dart';
-import 'package:trackify/features/dashboard/widgets/rescent_transactions.dart';
+import 'package:trackify/provider/budget_provider.dart';
+
 import 'package:trackify/provider/dashboard_provider.dart';
-import 'package:trackify/features/dashboard/widgets/expense_pie_chart.dart';
+import 'package:trackify/screens/auth/widgets/bg_glow.dart';
+
+import 'package:trackify/screens/dashboard/bills/bills_screen.dart';
+import 'package:trackify/screens/dashboard/expense/add_expense.dart';
+import 'package:trackify/screens/dashboard/monthlyBudget/set_monthly_budget_screen.dart';
+import 'package:trackify/screens/dashboard/profile/profile.dart';
+import 'package:trackify/screens/dashboard/widgets/bidget_progress.dart';
+import 'package:trackify/screens/dashboard/widgets/dash_board_header.dart';
+import 'package:trackify/screens/dashboard/widgets/expense_pie_chart.dart';
+import 'package:trackify/screens/dashboard/widgets/rescent_transactions.dart';
 
 import '../../core/constants/app_colors.dart';
 import 'widgets/balance_card.dart';
@@ -50,6 +53,7 @@ class _DashboardScreenState extends State<DashboardScreen>
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<DashboardProvider>().startListening();
+      context.read<BudgetProvider>().startListening();
     });
   }
 
@@ -57,12 +61,13 @@ class _DashboardScreenState extends State<DashboardScreen>
   void dispose() {
     _enterAnim.dispose();
     context.read<DashboardProvider>().stopListening();
+    context.read<BudgetProvider>().stopListening();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     final dashboard = context.watch<DashboardProvider>();
+    final budget = context.watch<BudgetProvider>();
 
     return Scaffold(
       backgroundColor: AppColors.bg,
@@ -106,7 +111,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                       const SizedBox(height: 20),
                       BudgetProgress(
                         spent: dashboard.totalExpense,
-                        total: 15000, // still hardcoded — see note below
+                        total: budget.monthlyBudget ?? 0,
                       ),
                       const SizedBox(height: 32),
                     ],
@@ -192,12 +197,20 @@ class _BottomNavState extends State<_BottomNav> {
 
           final isSelected = _selected == i;
           return GestureDetector(
-            onTap: () {
+            onTap: () async {
               if (i == 1) {
-                Navigator.push(
+                final budgetProvider = context.read<BudgetProvider>();
+                final result = await Navigator.push<double>(
                   context,
-                  MaterialPageRoute(builder: (_) => const SetMonthlyBudgetScreen()),
+                  MaterialPageRoute(
+                    builder: (_) => SetMonthlyBudgetScreen(
+                      currentBudget: budgetProvider.monthlyBudget,
+                    ),
+                  ),
                 );
+                if (result != null) {
+                  await budgetProvider.setBudget(result);
+                }
               } else if (i == 3) {
                 Navigator.push(
                   context,

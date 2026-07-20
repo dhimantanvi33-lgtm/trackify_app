@@ -180,10 +180,8 @@ class ProfileScreen extends StatelessWidget {
                         ),
                         const SizedBox(width: 14),
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
+
+                           child:    Text(
                                 displayName,
                                 style: const TextStyle(
                                   fontFamily: 'Poppins',
@@ -193,18 +191,8 @@ class ProfileScreen extends StatelessWidget {
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              const SizedBox(height: 3),
-                              Text(
-                                email,
-                                style: TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontSize: 12,
-                                  color: AppColors.muted,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
+
+
                         ),
                         Icon(Icons.chevron_right_rounded,
                             color: AppColors.muted.withOpacity(0.4)),
@@ -221,47 +209,20 @@ class ProfileScreen extends StatelessWidget {
                       _MenuItemData(
                         icon: Icons.person_outline_rounded,
                         label: 'Edit Profile',
-                        onTap: () {},
-                      ),
-                      _MenuItemData(
-                        icon: Icons.savings_outlined,
-                        label: 'Monthly Budget',
-                        onTap: () {},
+                        onTap: () {
+                          // Navigate to Edit Profile
+                        },
                       ),
                       _MenuItemData(
                         icon: Icons.lock_outline_rounded,
                         label: 'Change Password',
-                        onTap: () {},
+                        onTap: () {
+                          // Navigate to Change Password
+                        },
                       ),
+
                     ],
                   ),
-
-                  const SizedBox(height: 20),
-
-                  _SectionLabel(label: 'Preferences'),
-                  const SizedBox(height: 10),
-                  _MenuCard(
-                    items: [
-                      _MenuItemData(
-                        icon: Icons.notifications_none_rounded,
-                        label: 'Notifications',
-                        onTap: () {},
-                      ),
-                      _MenuItemData(
-                        icon: Icons.currency_rupee_rounded,
-                        label: 'Currency',
-                        trailingText: 'INR (₹)',
-                        onTap: () {},
-                      ),
-                      _MenuItemData(
-                        icon: Icons.download_outlined,
-                        label: 'Export Data',
-                        onTap: () {},
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 20),
 
 
 

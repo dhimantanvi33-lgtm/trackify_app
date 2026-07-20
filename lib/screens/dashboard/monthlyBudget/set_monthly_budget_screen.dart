@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:trackify/core/constants/app_colors.dart';
-import 'package:trackify/features/auth/widgets/bg_glow.dart';
+import 'package:trackify/screens/auth/widgets/bg_glow.dart';
 
 class SetMonthlyBudgetScreen extends StatefulWidget {
-  const SetMonthlyBudgetScreen({super.key});
+
+  final double? currentBudget;
+
+  const SetMonthlyBudgetScreen({super.key, this.currentBudget});
+
+  bool get _isEditing => currentBudget != null;
 
   @override
   State<SetMonthlyBudgetScreen> createState() =>
@@ -13,13 +18,46 @@ class SetMonthlyBudgetScreen extends StatefulWidget {
 
 class _SetMonthlyBudgetScreenState extends State<SetMonthlyBudgetScreen> {
   final _budgetCtrl = TextEditingController();
+  final _focusNode = FocusNode();
   String? _errorText;
   bool _saving = false;
+
+  late bool _fieldEnabled;
+
+  bool get _isEditing => widget._isEditing;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.currentBudget != null) {
+      _budgetCtrl.text = _formatAmount(widget.currentBudget!);
+    }
+
+    _fieldEnabled = !_isEditing;
+  }
+
+  String _formatAmount(double amount) {
+    return amount == amount.roundToDouble()
+        ? amount.toInt().toString()
+        : amount.toString();
+  }
 
   @override
   void dispose() {
     _budgetCtrl.dispose();
+    _focusNode.dispose();
     super.dispose();
+  }
+
+  void _enableEditing() {
+    setState(() => _fieldEnabled = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _focusNode.requestFocus();
+      _budgetCtrl.selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: _budgetCtrl.text.length,
+      );
+    });
   }
 
   Future<void> _saveBudget() async {
@@ -33,9 +71,6 @@ class _SetMonthlyBudgetScreenState extends State<SetMonthlyBudgetScreen> {
       _errorText = null;
       _saving = true;
     });
-
-    // TODO: wire this up to a BudgetProvider/BudgetService once ready,
-    // e.g. await context.read<BudgetProvider>().setMonthlyBudget(amount);
 
     if (!mounted) return;
     setState(() => _saving = false);
@@ -74,9 +109,9 @@ class _SetMonthlyBudgetScreenState extends State<SetMonthlyBudgetScreen> {
                         ),
                       ),
                       const Spacer(),
-                      const Text(
-                        'Monthly Budget',
-                        style: TextStyle(
+                      Text(
+                        _isEditing ? 'Edit Monthly Budget' : 'Monthly Budget',
+                        style: const TextStyle(
                           fontFamily: 'Poppins',
                           fontSize: 17,
                           fontWeight: FontWeight.w700,
@@ -96,7 +131,11 @@ class _SetMonthlyBudgetScreenState extends State<SetMonthlyBudgetScreen> {
                       children: [
                         const SizedBox(height: 12),
                         Text(
-                          'Set how much you want to spend this month',
+                          _isEditing
+                              ? (_fieldEnabled
+                              ? 'Update how much you want to spend this month'
+                              : 'Tap the edit icon to change your budget')
+                              : 'Set how much you want to spend this month',
                           style: TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 13,
@@ -119,30 +158,37 @@ class _SetMonthlyBudgetScreenState extends State<SetMonthlyBudgetScreen> {
                           ),
                           child: Row(
                             children: [
-                              const Text(
+                              Text(
                                 '₹',
                                 style: TextStyle(
                                   fontFamily: 'Poppins',
                                   fontSize: 28,
                                   fontWeight: FontWeight.w800,
-                                  color: AppColors.accent,
+                                  color: _fieldEnabled
+                                      ? AppColors.accent
+                                      : AppColors.accent.withOpacity(0.5),
                                 ),
                               ),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: TextField(
                                   controller: _budgetCtrl,
+                                  focusNode: _focusNode,
+                                  enabled: _fieldEnabled,
+                                  autofocus: !_isEditing,
                                   keyboardType: const TextInputType
                                       .numberWithOptions(decimal: true),
                                   inputFormatters: [
                                     FilteringTextInputFormatter.allow(
                                         RegExp(r'^\d+\.?\d{0,2}')),
                                   ],
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontFamily: 'Poppins',
                                     fontSize: 28,
                                     fontWeight: FontWeight.w800,
-                                    color: AppColors.cream,
+                                    color: _fieldEnabled
+                                        ? AppColors.cream
+                                        : AppColors.cream.withOpacity(0.5),
                                   ),
                                   decoration: InputDecoration(
                                     hintText: '15000',
@@ -160,6 +206,24 @@ class _SetMonthlyBudgetScreenState extends State<SetMonthlyBudgetScreen> {
                                       setState(() => _errorText = null),
                                 ),
                               ),
+
+                              if (_isEditing && !_fieldEnabled)
+                                GestureDetector(
+                                  onTap: _enableEditing,
+                                  child: Container(
+                                    width: 34,
+                                    height: 34,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.accent.withOpacity(0.15),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Icon(
+                                      Icons.edit_rounded,
+                                      size: 16,
+                                      color: AppColors.accent,
+                                    ),
+                                  ),
+                                ),
                             ],
                           ),
                         ),
@@ -185,20 +249,25 @@ class _SetMonthlyBudgetScreenState extends State<SetMonthlyBudgetScreen> {
                           ),
                         const Spacer(),
                         GestureDetector(
-                          onTap: _saving ? null : _saveBudget,
+                          onTap: (_saving || !_fieldEnabled) ? null : _saveBudget,
                           child: Container(
                             width: double.infinity,
                             height: 54,
                             decoration: BoxDecoration(
-                              color: AppColors.accent,
+                              color: _fieldEnabled
+                                  ? AppColors.accent
+                                  : AppColors.accent.withOpacity(0.4),
                               borderRadius: BorderRadius.circular(16),
-                              boxShadow: [
+                              boxShadow: _fieldEnabled
+                                  ? [
                                 BoxShadow(
-                                  color: AppColors.accent.withOpacity(0.35),
+                                  color:
+                                  AppColors.accent.withOpacity(0.35),
                                   blurRadius: 16,
                                   offset: const Offset(0, 6),
                                 ),
-                              ],
+                              ]
+                                  : null,
                             ),
                             child: Center(
                               child: _saving
@@ -210,9 +279,11 @@ class _SetMonthlyBudgetScreenState extends State<SetMonthlyBudgetScreen> {
                                   color: Colors.white,
                                 ),
                               )
-                                  : const Text(
-                                'Save Budget',
-                                style: TextStyle(
+                                  : Text(
+                                _isEditing
+                                    ? 'Update Budget'
+                                    : 'Save Budget',
+                                style: const TextStyle(
                                   fontFamily: 'Poppins',
                                   fontSize: 15,
                                   fontWeight: FontWeight.w700,

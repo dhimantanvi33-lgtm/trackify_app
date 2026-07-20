@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:trackify/features/auth/forgot_password.dart';
-import 'package:trackify/features/auth/sign_up_screen.dart';
-import 'package:trackify/features/auth/widgets/bg_glow.dart';
-import 'package:trackify/features/auth/widgets/logo_bar.dart';
-import 'package:trackify/features/dashboard/dash_board.dart';
+
 import 'package:trackify/provider/auth_provider.dart';
+import 'package:trackify/screens/auth/forgot_password.dart';
+import 'package:trackify/screens/auth/sign_up_screen.dart';
+import 'package:trackify/screens/auth/widgets/bg_glow.dart';
+import 'package:trackify/screens/auth/widgets/logo_bar.dart';
+import 'package:trackify/screens/dashboard/dash_board.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_strings.dart';
