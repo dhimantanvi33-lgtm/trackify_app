@@ -32,6 +32,13 @@ class _DashboardScreenState extends State<DashboardScreen>
   late final Animation<double> _fadeAnim;
   late final Animation<Offset> _slideAnim;
 
+  int _selectedTab = 0;
+
+  void _onTabSelected(int index) {
+    if (index == _selectedTab) return;
+    setState(() => _selectedTab = index);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -64,10 +71,60 @@ class _DashboardScreenState extends State<DashboardScreen>
     context.read<BudgetProvider>().stopListening();
     super.dispose();
   }
-  @override
-  Widget build(BuildContext context) {
+
+  Widget _buildHomeBody() {
     final dashboard = context.watch<DashboardProvider>();
     final budget = context.watch<BudgetProvider>();
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          DashboardHeader(
+            userName: 'Tanvi',
+            onNotificationTap: () {},
+            onAvatarTap: () {},
+          ),
+          const SizedBox(height: 28),
+          BalanceCard(
+            totalBalance: dashboard.totalBalance,
+            income: dashboard.totalIncome,
+            expense: dashboard.totalExpense,
+          ),
+          const SizedBox(height: 20),
+          ExpensePieChart(categories: dashboard.categoryBreakdown),
+          const SizedBox(height: 20),
+          MonthlySpendingChart(
+            weeklyData: dashboard.weeklySpend,
+            labels: DashboardProvider.weekLabels,
+          ),
+          const SizedBox(height: 20),
+          RecentTransactions(
+            transactions: dashboard.recentTransactions,
+            onViewAll: () {},
+          ),
+          const SizedBox(height: 20),
+          BudgetProgress(
+            spent: dashboard.totalExpense,
+            total: budget.monthlyBudget ?? 0,
+          ),
+          const SizedBox(height: 32),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tabBodies = [
+      _buildHomeBody(),
+      SetMonthlyBudgetScreen(
+        currentBudget: context.watch<BudgetProvider>().monthlyBudget,
+      ),
+      const BillsScreen(),
+      const ProfileScreen(),
+    ];
 
     return Scaffold(
       backgroundColor: AppColors.bg,
@@ -79,61 +136,31 @@ class _DashboardScreenState extends State<DashboardScreen>
               opacity: _fadeAnim,
               child: SlideTransition(
                 position: _slideAnim,
-                child: SingleChildScrollView(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      DashboardHeader(
-                        userName: 'Tanvi',
-                        onNotificationTap: () {},
-                        onAvatarTap: () {},
-                      ),
-                      const SizedBox(height: 28),
-                      BalanceCard(
-                        totalBalance: dashboard.totalBalance,
-                        income: dashboard.totalIncome,
-                        expense: dashboard.totalExpense,
-                      ),
-                      const SizedBox(height: 20),
-                      ExpensePieChart(categories: dashboard.categoryBreakdown),
-                      const SizedBox(height: 20),
-                      MonthlySpendingChart(
-                        weeklyData: dashboard.weeklySpend,
-                        labels: DashboardProvider.weekLabels,
-                      ),
-                      const SizedBox(height: 20),
-                      RecentTransactions(
-                        transactions: dashboard.recentTransactions,
-                        onViewAll: () {},
-                      ),
-                      const SizedBox(height: 20),
-                      BudgetProgress(
-                        spent: dashboard.totalExpense,
-                        total: budget.monthlyBudget ?? 0,
-                      ),
-                      const SizedBox(height: 32),
-                    ],
-                  ),
+                child: IndexedStack(
+                  index: _selectedTab,
+                  children: tabBodies,
                 ),
               ),
             ),
           ),
         ],
       ),
-      bottomNavigationBar: _BottomNav(),
+      bottomNavigationBar: _BottomNav(
+        selectedIndex: _selectedTab,
+        onTabSelected: _onTabSelected,
+      ),
     );
   }
 }
 
-class _BottomNav extends StatefulWidget {
-  @override
-  State<_BottomNav> createState() => _BottomNavState();
-}
+class _BottomNav extends StatelessWidget {
+  final int selectedIndex;
+  final ValueChanged<int> onTabSelected;
 
-class _BottomNavState extends State<_BottomNav> {
-  int _selected = 0;
+  const _BottomNav({
+    required this.selectedIndex,
+    required this.onTabSelected,
+  });
 
   static const _items = [
     (icon: Icons.home_rounded, label: 'Home'),
@@ -195,36 +222,11 @@ class _BottomNavState extends State<_BottomNav> {
             );
           }
 
-          final isSelected = _selected == i;
+          final tabIndex = i < 2 ? i : i - 1;
+          final isSelected = selectedIndex == tabIndex;
+
           return GestureDetector(
-            onTap: () async {
-              if (i == 1) {
-                final budgetProvider = context.read<BudgetProvider>();
-                final result = await Navigator.push<double>(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => SetMonthlyBudgetScreen(
-                      currentBudget: budgetProvider.monthlyBudget,
-                    ),
-                  ),
-                );
-                if (result != null) {
-                  await budgetProvider.setBudget(result);
-                }
-              } else if (i == 3) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const BillsScreen()),
-                );
-              } else if (i == 4) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const ProfileScreen()),
-                );
-              } else {
-                setState(() => _selected = i);
-              }
-            },
+            onTap: () => onTabSelected(tabIndex),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
