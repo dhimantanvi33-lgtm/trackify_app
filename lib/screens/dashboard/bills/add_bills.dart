@@ -1,35 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'package:trackify/core/constants/app_colors.dart';
+import 'package:trackify/provider/bill_provider.dart';
 import 'package:trackify/screens/auth/widgets/bg_glow.dart';
-
-
-class AddBillResult {
-  final String title;
-  final String category;
-  final double amount;
-  final DateTime dueDate;
-  final IconData icon;
-  final Color color;
-  final bool isRecurring;
-
-  const AddBillResult({
-    required this.title,
-    required this.category,
-    required this.amount,
-    required this.dueDate,
-    required this.icon,
-    required this.color,
-    required this.isRecurring,
-  });
-}
-
-class _CategoryOption {
-  final String label;
-  final IconData icon;
-  final Color color;
-  const _CategoryOption(this.label, this.icon, this.color);
-}
+import 'package:trackify/screens/dashboard/bills/bill_category.dart';
 
 class AddBillScreen extends StatefulWidget {
   const AddBillScreen({super.key});
@@ -42,23 +17,9 @@ class _AddBillScreenState extends State<AddBillScreen> {
   final _titleCtrl = TextEditingController();
   final _amountCtrl = TextEditingController();
 
-  static const _categories = [
-    _CategoryOption('Housing', Icons.house_outlined, Color(0xFF818CF8)),
-    _CategoryOption('Utilities', Icons.bolt_outlined, Color(0xFFFBBF24)),
-    _CategoryOption('Internet', Icons.wifi_rounded, Color(0xFF38BDF8)),
-    _CategoryOption(
-        'Entertainment', Icons.movie_outlined, Color(0xFFA78BFA)),
-    _CategoryOption(
-        'Insurance', Icons.favorite_outline_rounded, Color(0xFFF472B6)),
-    _CategoryOption(
-        'Loan', Icons.directions_car_filled_outlined, Color(0xFFF87171)),
-    _CategoryOption('Other', Icons.receipt_long_outlined, Color(0xFF4ADE80)),
-  ];
-
   int? _selectedCategory;
   DateTime _dueDate = DateTime.now().add(const Duration(days: 7));
   bool _isRecurring = false;
-  bool _saving = false;
 
   String? _titleError;
   String? _amountError;
@@ -122,29 +83,34 @@ class _AddBillScreenState extends State<AddBillScreen> {
       return;
     }
 
-    setState(() => _saving = true);
+    final category = BillCategories.all[_selectedCategory!];
+    final provider = context.read<BillProvider>();
 
-    final category = _categories[_selectedCategory!];
+    final success = await provider.addBill(
+      title: title,
+      category: category.label,
+      amount: amount!,
+      dueDate: _dueDate,
+      isRecurring: _isRecurring,
+    );
 
     if (!mounted) return;
-    setState(() => _saving = false);
 
-    Navigator.pop(
-      context,
-      AddBillResult(
-        title: title,
-        category: category.label,
-        amount: amount!,
-        dueDate: _dueDate,
-        icon: category.icon,
-        color: category.color,
-        isRecurring: _isRecurring,
-      ),
-    );
+    if (success) {
+      Navigator.pop(context, true);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(provider.errorMessage ?? 'Failed to save bill'),
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isSaving = context.watch<BillProvider>().isSaving;
+
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: Stack(
@@ -336,9 +302,9 @@ class _AddBillScreenState extends State<AddBillScreen> {
                           spacing: 10,
                           runSpacing: 10,
                           children: [
-                            for (int i = 0; i < _categories.length; i++)
+                            for (int i = 0; i < BillCategories.all.length; i++)
                               _CategoryChip(
-                                option: _categories[i],
+                                option: BillCategories.all[i],
                                 selected: _selectedCategory == i,
                                 onTap: () => setState(() {
                                   _selectedCategory = i;
@@ -395,7 +361,7 @@ class _AddBillScreenState extends State<AddBillScreen> {
 
                         // ── Save button ───────────────────────────
                         GestureDetector(
-                          onTap: _saving ? null : _saveBill,
+                          onTap: isSaving ? null : _saveBill,
                           child: Container(
                             width: double.infinity,
                             height: 54,
@@ -411,7 +377,7 @@ class _AddBillScreenState extends State<AddBillScreen> {
                               ],
                             ),
                             child: Center(
-                              child: _saving
+                              child: isSaving
                                   ? const SizedBox(
                                 width: 22,
                                 height: 22,
@@ -518,7 +484,7 @@ class _InputBox extends StatelessWidget {
 }
 
 class _CategoryChip extends StatelessWidget {
-  final _CategoryOption option;
+  final BillCategory option;
   final bool selected;
   final VoidCallback onTap;
 

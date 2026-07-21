@@ -1,31 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:trackify/core/constants/app_colors.dart';
+import 'package:trackify/model/bill_model.dart';
+import 'package:trackify/provider/bill_provider.dart';
 import 'package:trackify/screens/auth/widgets/bg_glow.dart';
 import 'package:trackify/screens/dashboard/bills/add_bills.dart';
-
-enum _BillStatus { paid, due, overdue }
-
-class _Bill {
-  final String title;
-  final String category;
-  final double amount;
-  final DateTime dueDate;
-  final IconData icon;
-  final Color color;
-  final bool isRecurring;
-  _BillStatus status;
-
-  _Bill({
-    required this.title,
-    required this.category,
-    required this.amount,
-    required this.dueDate,
-    required this.icon,
-    required this.color,
-    required this.isRecurring,
-    required this.status,
-  });
-}
+import 'package:trackify/screens/dashboard/bills/bill_category.dart';
 
 class BillsScreen extends StatefulWidget {
   const BillsScreen({super.key});
@@ -43,69 +23,6 @@ class _BillsScreenState extends State<BillsScreen>
   int _filterIndex = 0;
 
   static const _filters = ['All', 'Upcoming', 'Paid'];
-
-  late final List<_Bill> _bills = [
-    _Bill(
-      title: 'Apartment Rent',
-      category: 'Housing',
-      amount: 12000,
-      dueDate: DateTime.now().add(const Duration(days: 2)),
-      icon: Icons.house_outlined,
-      color: const Color(0xFF818CF8),
-      isRecurring: true,
-      status: _BillStatus.due,
-    ),
-    _Bill(
-      title: 'Electricity Bill',
-      category: 'Utilities',
-      amount: 1450,
-      dueDate: DateTime.now().add(const Duration(days: 5)),
-      icon: Icons.bolt_outlined,
-      color: const Color(0xFFFBBF24),
-      isRecurring: true,
-      status: _BillStatus.due,
-    ),
-    _Bill(
-      title: 'Internet & Wi-Fi',
-      category: 'Utilities',
-      amount: 999,
-      dueDate: DateTime.now().subtract(const Duration(days: 1)),
-      icon: Icons.wifi_rounded,
-      color: const Color(0xFF38BDF8),
-      isRecurring: true,
-      status: _BillStatus.overdue,
-    ),
-    _Bill(
-      title: 'Netflix Subscription',
-      category: 'Entertainment',
-      amount: 649,
-      dueDate: DateTime.now().subtract(const Duration(days: 6)),
-      icon: Icons.movie_outlined,
-      color: const Color(0xFFA78BFA),
-      isRecurring: true,
-      status: _BillStatus.paid,
-    ),
-    _Bill(
-      title: 'Health Insurance',
-      category: 'Insurance',
-      amount: 3200,
-      dueDate: DateTime.now().add(const Duration(days: 12)),
-      icon: Icons.favorite_outline_rounded,
-      color: const Color(0xFFF472B6),
-      isRecurring: false,
-      status: _BillStatus.due,
-    ),
-    _Bill(
-      title: 'Car Loan EMI',
-      category: 'Loan',
-      amount: 8500,
-      dueDate: DateTime.now().subtract(const Duration(days: 10)),
-      icon: Icons.directions_car_filled_outlined,
-      color: const Color(0xFFF87171),
-      isRecurring: true,
-      status: _BillStatus.paid,
-    ),
-  ];
 
   @override
   void initState() {
@@ -125,41 +42,16 @@ class _BillsScreenState extends State<BillsScreen>
         Tween<Offset>(begin: const Offset(0, 0.04), end: Offset.zero).animate(
           CurvedAnimation(parent: _enterAnim, curve: Curves.easeOut),
         );
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<BillProvider>().startListening();
+    });
   }
 
   @override
   void dispose() {
     _enterAnim.dispose();
     super.dispose();
-  }
-
-  List<_Bill> get _filteredBills {
-    switch (_filterIndex) {
-      case 1:
-        return _bills
-            .where((b) => b.status == _BillStatus.due || b.status == _BillStatus.overdue)
-            .toList();
-      case 2:
-        return _bills.where((b) => b.status == _BillStatus.paid).toList();
-      default:
-        return _bills;
-    }
-  }
-
-  double get _totalDue => _bills
-      .where((b) => b.status != _BillStatus.paid)
-      .fold(0, (sum, b) => sum + b.amount);
-
-  int get _paidCount => _bills.where((b) => b.status == _BillStatus.paid).length;
-  int get _dueCount => _bills.where((b) => b.status == _BillStatus.due).length;
-  int get _overdueCount =>
-      _bills.where((b) => b.status == _BillStatus.overdue).length;
-
-  void _togglePaid(_Bill bill) {
-    setState(() {
-      bill.status =
-      bill.status == _BillStatus.paid ? _BillStatus.due : _BillStatus.paid;
-    });
   }
 
   String _formatDate(DateTime d) {
@@ -172,7 +64,8 @@ class _BillsScreenState extends State<BillsScreen>
 
   @override
   Widget build(BuildContext context) {
-    final filtered = _filteredBills;
+    final provider = context.watch<BillProvider>();
+    final filtered = provider.billsForFilter(_filterIndex);
 
     return Scaffold(
       backgroundColor: AppColors.bg,
@@ -205,23 +98,15 @@ class _BillsScreenState extends State<BillsScreen>
                           _IconBtn(
                             icon: Icons.add_rounded,
                             onTap: () async {
-                              final result = await Navigator.push<AddBillResult>(
+                              final added = await Navigator.push<bool>(
                                 context,
-                                MaterialPageRoute(builder: (_) => const AddBillScreen()),
+                                MaterialPageRoute(
+                                    builder: (_) => const AddBillScreen()),
                               );
-                              if (result != null) {
-                                setState(() {
-                                  _bills.add(_Bill(
-                                    title: result.title,
-                                    category: result.category,
-                                    amount: result.amount,
-                                    dueDate: result.dueDate,
-                                    icon: result.icon,
-                                    color: result.color,
-                                    isRecurring: result.isRecurring,
-                                    status: _BillStatus.due,
-                                  ));
-                                });
+                              if (added == true && mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Bill added')),
+                                );
                               }
                             },
                           ),
@@ -256,7 +141,7 @@ class _BillsScreenState extends State<BillsScreen>
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              '₹${_totalDue.toStringAsFixed(0)}',
+                              '₹${provider.totalDue.toStringAsFixed(0)}',
                               style: const TextStyle(
                                 fontFamily: 'Poppins',
                                 fontSize: 26,
@@ -268,17 +153,17 @@ class _BillsScreenState extends State<BillsScreen>
                             Row(
                               children: [
                                 _StatusPill(
-                                  label: '$_paidCount Paid',
+                                  label: '${provider.paidCount} Paid',
                                   color: const Color(0xFF4ADE80),
                                 ),
                                 const SizedBox(width: 8),
                                 _StatusPill(
-                                  label: '$_dueCount Due',
+                                  label: '${provider.dueCount} Due',
                                   color: const Color(0xFFFBBF24),
                                 ),
                                 const SizedBox(width: 8),
                                 _StatusPill(
-                                  label: '$_overdueCount Overdue',
+                                  label: '${provider.overdueCount} Overdue',
                                   color: const Color(0xFFF87171),
                                 ),
                               ],
@@ -299,41 +184,65 @@ class _BillsScreenState extends State<BillsScreen>
                       const SizedBox(height: 20),
 
                       // ── Bills list ───────────────────────────────────
-                      if (filtered.isEmpty)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 40),
+                      if (provider.isLoading && provider.bills.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 40),
                           child: Center(
-                            child: Column(
-                              children: [
-                                Icon(Icons.receipt_long_outlined,
-                                    size: 36,
-                                    color: AppColors.muted.withOpacity(0.35)),
-                                const SizedBox(height: 10),
-                                Text(
-                                  'No bills here',
-                                  style: TextStyle(
-                                    fontFamily: 'Inter',
-                                    fontSize: 13,
-                                    color: AppColors.muted.withOpacity(0.6),
-                                  ),
-                                ),
-                              ],
+                            child: CircularProgressIndicator(
+                              color: AppColors.accent,
                             ),
                           ),
                         )
-                      else
-                        Column(
-                          children: [
-                            for (final bill in filtered) ...[
-                              _BillCard(
-                                bill: bill,
-                                dateLabel: _formatDate(bill.dueDate),
-                                onToggle: () => _togglePaid(bill),
+                      else if (provider.errorMessage != null &&
+                          provider.bills.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 40),
+                          child: Center(
+                            child: Text(
+                              provider.errorMessage!,
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 13,
+                                color: AppColors.muted.withOpacity(0.7),
                               ),
-                              const SizedBox(height: 12),
+                            ),
+                          ),
+                        )
+                      else if (filtered.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 40),
+                            child: Center(
+                              child: Column(
+                                children: [
+                                  Icon(Icons.receipt_long_outlined,
+                                      size: 36,
+                                      color: AppColors.muted.withOpacity(0.35)),
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    'No bills here',
+                                    style: TextStyle(
+                                      fontFamily: 'Inter',
+                                      fontSize: 13,
+                                      color: AppColors.muted.withOpacity(0.6),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        else
+                          Column(
+                            children: [
+                              for (final bill in filtered) ...[
+                                _BillCard(
+                                  bill: bill,
+                                  dateLabel: _formatDate(bill.dueDate),
+                                  onToggle: () => provider.togglePaid(bill),
+                                ),
+                                const SizedBox(height: 12),
+                              ],
                             ],
-                          ],
-                        ),
+                          ),
 
                       const SizedBox(height: 16),
                     ],
@@ -451,7 +360,7 @@ class _StatusPill extends StatelessWidget {
 }
 
 class _BillCard extends StatelessWidget {
-  final _Bill bill;
+  final Bill bill;
   final String dateLabel;
   final VoidCallback onToggle;
 
@@ -463,11 +372,11 @@ class _BillCard extends StatelessWidget {
 
   (Color, String) _statusMeta() {
     switch (bill.status) {
-      case _BillStatus.paid:
+      case BillStatus.paid:
         return (const Color(0xFF4ADE80), 'Paid');
-      case _BillStatus.due:
+      case BillStatus.due:
         return (const Color(0xFFFBBF24), 'Due');
-      case _BillStatus.overdue:
+      case BillStatus.overdue:
         return (const Color(0xFFF87171), 'Overdue');
     }
   }
@@ -475,7 +384,8 @@ class _BillCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (statusColor, statusLabel) = _statusMeta();
-    final isPaid = bill.status == _BillStatus.paid;
+    final isPaid = bill.status == BillStatus.paid;
+    final categoryMeta = BillCategories.of(bill.category);
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -493,10 +403,10 @@ class _BillCard extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: bill.color.withOpacity(0.15),
+              color: categoryMeta.color.withOpacity(0.15),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(bill.icon, size: 20, color: bill.color),
+            child: Icon(categoryMeta.icon, size: 20, color: categoryMeta.color),
           ),
           const SizedBox(width: 12),
           Expanded(
