@@ -60,6 +60,25 @@ class AuthService {
 
   Future<void> signOut() => _firebaseAuth.signOut();
 
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final user = _firebaseAuth.currentUser;
+    if (user == null || user.email == null) {
+      throw AuthException('No signed-in user found');
+    }
+    try {
+      final cred = EmailAuthProvider.credential(
+        email: user.email!,
+        password: currentPassword,
+      );
+      await user.reauthenticateWithCredential(cred);
+      await user.updatePassword(newPassword);
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(_mapFirebaseError(e));
+    }
+  }
   String _mapFirebaseError(FirebaseAuthException e) {
     switch (e.code) {
       case 'invalid-email':
@@ -79,6 +98,8 @@ class AuthService {
         return 'Network error. Check your connection';
       case 'too-many-requests':
         return 'Too many attempts. Please try again later';
+      case 'requires-recent-login':
+        return 'Please log out and log in again, then retry';
       default:
         return e.message ?? 'Something went wrong. Please try again';
     }

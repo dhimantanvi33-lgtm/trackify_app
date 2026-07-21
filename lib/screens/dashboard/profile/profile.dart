@@ -2,109 +2,17 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:trackify/core/constants/app_colors.dart';
 import 'package:trackify/screens/auth/widgets/bg_glow.dart';
+import 'package:trackify/screens/dashboard/profile/change_password.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   Future<void> _confirmLogout(BuildContext context) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showModalBottomSheet<bool>(
       context: context,
-      builder: (dialogContext) => Dialog(
-        backgroundColor: const Color(0xFF1C1C28),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  color: Colors.redAccent.shade200.withOpacity(0.12),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(Icons.logout_rounded,
-                    color: Colors.redAccent.shade200, size: 24),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Log out?',
-                style: TextStyle(
-                  fontFamily: 'Poppins',
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.cream,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'You\'ll need to sign in again to access your account.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 13,
-                  color: AppColors.muted,
-                ),
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => Navigator.pop(dialogContext, false),
-                      child: Container(
-                        height: 46,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: AppColors.muted.withOpacity(0.08),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                              color: AppColors.muted.withOpacity(0.15)),
-                        ),
-                        child: Text(
-                          'Cancel',
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.muted,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => Navigator.pop(dialogContext, true),
-                      child: Container(
-                        height: 46,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: Colors.redAccent.shade200,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Text(
-                          'Log Out',
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (sheetContext) => _LogoutSheetContent(),
     );
 
     if (confirmed == true) {
@@ -217,7 +125,10 @@ class ProfileScreen extends StatelessWidget {
                         icon: Icons.lock_outline_rounded,
                         label: 'Change Password',
                         onTap: () {
-                          // Navigate to Change Password
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const ChangePasswordScreen()),
+                          );
                         },
                       ),
 
@@ -375,6 +286,118 @@ class _MenuRow extends StatelessWidget {
             const SizedBox(width: 4),
             Icon(Icons.chevron_right_rounded,
                 size: 18, color: AppColors.muted.withOpacity(0.4)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+class _LogoutSheetContent extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Container(
+        margin: const EdgeInsets.all(12),
+        padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1C1C28),
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Drag handle
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.muted.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: Colors.redAccent.shade200.withOpacity(0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.logout_rounded,
+                  color: Colors.redAccent.shade200, size: 24),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Log out?',
+              style: TextStyle(
+                fontFamily: 'Poppins',
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+                color: AppColors.cream,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'You\'ll need to sign in again to access your account.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 13,
+                color: AppColors.muted,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => Navigator.pop(context, false),
+                    child: Container(
+                      height: 46,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: AppColors.muted.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(12),
+                        border:
+                        Border.all(color: AppColors.muted.withOpacity(0.15)),
+                      ),
+                      child: Text(
+                        'Cancel',
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.muted,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => Navigator.pop(context, true),
+                    child: Container(
+                      height: 46,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: Colors.redAccent.shade200,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Text(
+                        'Log Out',
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),

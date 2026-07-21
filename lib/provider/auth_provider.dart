@@ -104,7 +104,27 @@ class AuthProvider extends ChangeNotifier {
     _status = AuthStatus.idle;
     notifyListeners();
   }
-
+  Future<bool> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    _setLoading();
+    try {
+      await _authService.changePassword(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+      );
+      _status = AuthStatus.authenticated;
+      notifyListeners();
+      return true;
+    } on AuthException catch (e) {
+      _setError(e.message);
+      return false;
+    } catch (_) {
+      _setError('Something went wrong. Please try again');
+      return false;
+    }
+  }
   void clearError() {
     _errorMessage = null;
     if (_status == AuthStatus.error) _status = AuthStatus.idle;
