@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:trackify/provider/auth_provider.dart';
 import 'package:trackify/provider/budget_provider.dart';
 
 import 'package:trackify/provider/dashboard_provider.dart';
@@ -79,10 +80,14 @@ class _DashboardScreenState extends State<DashboardScreen>
       MaterialPageRoute(builder: (_) => const AllTransactionsScreen()),
     );
   }
-
   Widget _buildHomeBody() {
     final dashboard = context.watch<DashboardProvider>();
     final budget = context.watch<BudgetProvider>();
+    final auth = context.watch<AuthProvider>();
+
+    final userName = auth.user?.displayName?.isNotEmpty == true
+        ? auth.user!.displayName!
+        : (auth.user?.email?.split('@').first ?? 'User');
 
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
@@ -90,7 +95,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           DashboardHeader(
-            userName: 'Tanvi',
+            userName: userName,
             onNotificationTap: () {},
             onAvatarTap: () {},
           ),
