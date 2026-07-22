@@ -59,25 +59,41 @@ class DashboardProvider extends ChangeNotifier {
     }).toList();
   }
 
+  /// All transactions, newest first. Use this (instead of [recentTransactions])
+  /// wherever the full history is needed, e.g. an "All Transactions" screen.
+  List<TransactionItem> get allTransactions {
+    final sorted = _sortedByRecency();
+    return sorted.map(_toTransactionItem).toList();
+  }
+
+  /// Just the latest 5, for the dashboard's summary card.
   List<TransactionItem> get recentTransactions {
+    final sorted = _sortedByRecency();
+    return sorted.take(5).map(_toTransactionItem).toList();
+  }
+
+  List<ExpenseModel> _sortedByRecency() {
     final sorted = [..._transactions]..sort((a, b) {
       final aTime = a.createdAt ?? a.date;
       final bTime = b.createdAt ?? b.date;
       return bTime.compareTo(aTime);
     });
+    return sorted;
+  }
 
-    return sorted.take(5).map((t) {
-      final meta = metaFor(t.category);
-      return TransactionItem(
-        title: t.title,
-        category: t.category,
-        amount: t.amount,
-        isExpense: t.isExpense,
-        icon: meta.icon,
-        iconColor: meta.color,
-        time: _formatRelativeTime(t.createdAt ?? t.date),
-      );
-    }).toList();
+  TransactionItem _toTransactionItem(ExpenseModel t) {
+    final meta = metaFor(t.category);
+    final date = t.createdAt ?? t.date;
+    return TransactionItem(
+      title: t.title,
+      category: t.category,
+      amount: t.amount,
+      isExpense: t.isExpense,
+      icon: meta.icon,
+      iconColor: meta.color,
+      time: _formatRelativeTime(date),
+      date: date,
+    );
   }
 
   static const weekLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];

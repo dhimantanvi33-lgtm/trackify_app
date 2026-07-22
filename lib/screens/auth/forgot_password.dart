@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:trackify/provider/auth_provider.dart';
 import 'package:trackify/screens/auth/widgets/bg_glow.dart';
 import 'package:trackify/screens/auth/widgets/logo_bar.dart';
 
@@ -6,7 +8,6 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/widgets/custom_button.dart';
 import '../../core/widgets/custom_textfield.dart';
-import 'otp_verify.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -18,7 +19,6 @@ class ForgotPasswordScreen extends StatefulWidget {
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
     with SingleTickerProviderStateMixin {
   final _emailCtrl = TextEditingController();
-  bool _loading = false;
   bool _emailSent = false;
   String? _emailError;
 
@@ -77,23 +77,41 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
 
   Future<void> _sendResetLink() async {
     if (!_validate()) return;
-    setState(() => _loading = true);
-    await Future.delayed(const Duration(seconds: 2));
-    if (mounted) {
-      setState(() => _loading = false);
-      Navigator.push(
-        context,
-        PageRouteBuilder(
-          pageBuilder: (_, anim, __) =>
-              OtpVerifyScreen(destination: _emailCtrl.text.trim()),
-          transitionsBuilder: (_, anim, __, child) => SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(1, 0),
-              end: Offset.zero,
-            ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
-            child: child,
+
+    final authProvider = context.read<AuthProvider>();
+    final success =
+    await authProvider.sendPasswordReset(_emailCtrl.text.trim());
+
+    if (!mounted) return;
+
+    if (success) {
+      setState(() => _emailSent = true);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            authProvider.errorMessage ?? 'Failed to send reset link',
           ),
-          transitionDuration: const Duration(milliseconds: 380),
+        ),
+      );
+    }
+  }
+
+  Future<void> _resendResetLink() async {
+    final authProvider = context.read<AuthProvider>();
+    final success =
+    await authProvider.sendPasswordReset(_emailCtrl.text.trim());
+
+    if (!mounted) return;
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Reset link sent again')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(authProvider.errorMessage ?? 'Failed to resend link'),
         ),
       );
     }
@@ -101,6 +119,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isLoading = context.watch<AuthProvider>().isLoading;
+
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: Stack(
@@ -216,8 +236,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                         // Send button
                         TrackifyButton(
                           label: 'Send Reset Link',
-                          isLoading: _loading,
-                          onPressed: _sendResetLink,
+                          isLoading: isLoading,
+                          onPressed: () {
+                            if (!isLoading) _sendResetLink();
+                          },
                         ),
                       ] else ...[
                         // Success card
@@ -291,42 +313,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                           label: 'Resend Email',
                           outlined: true,
                           prefixIcon: Icons.refresh_rounded,
+                          isLoading: isLoading,
                           onPressed: () {
-                            setState(() {
-                              _emailSent = false;
-                              _emailCtrl.clear();
-                            });
+                            if (!isLoading) _resendResetLink();
                           },
                         ),
                       ],
 
                       const SizedBox(height: 40),
-
-                      // Help text
-                      Center(
-                        child: RichText(
-                          text: TextSpan(
-                            style: const TextStyle(
-                                fontFamily: 'Inter', fontSize: 13),
-                            children: [
-                              TextSpan(
-                                text: 'Need help? ',
-                                style:
-                                TextStyle(color: AppColors.muted),
-                              ),
-                              TextSpan(
-                                text: 'Contact support',
-                                style: TextStyle(
-                                  color: AppColors.accent,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 32),
                     ],
                   ),
                 ),

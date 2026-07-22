@@ -110,17 +110,10 @@ class ProfileScreen extends StatelessWidget {
 
                   const SizedBox(height: 24),
 
-                  _SectionLabel(label: 'Account'),
                   const SizedBox(height: 10),
                   _MenuCard(
                     items: [
-                      _MenuItemData(
-                        icon: Icons.person_outline_rounded,
-                        label: 'Edit Profile',
-                        onTap: () {
-                          // Navigate to Edit Profile
-                        },
-                      ),
+
                       _MenuItemData(
                         icon: Icons.lock_outline_rounded,
                         label: 'Change Password',

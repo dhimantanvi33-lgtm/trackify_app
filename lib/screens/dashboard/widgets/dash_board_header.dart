@@ -89,46 +89,7 @@ class DashboardHeader extends StatelessWidget {
           ),
         ),
 
-        // Notification bell
-        GestureDetector(
-          onTap: onNotificationTap,
-          child: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: AppColors.muted.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: AppColors.muted.withOpacity(0.15),
-                width: 1,
-              ),
-            ),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Icon(
-                  Icons.notifications_outlined,
-                  color: AppColors.muted,
-                  size: 20,
-                ),
-                // Notification dot
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: Container(
-                    width: 7,
-                    height: 7,
-                    decoration: BoxDecoration(
-                      color: AppColors.accent,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.bg, width: 1.5),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
+
       ],
     );
   }

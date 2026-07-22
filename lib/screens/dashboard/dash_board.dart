@@ -9,6 +9,7 @@ import 'package:trackify/screens/dashboard/bills/bills_screen.dart';
 import 'package:trackify/screens/dashboard/expense/add_expense.dart';
 import 'package:trackify/screens/dashboard/monthlyBudget/set_monthly_budget_screen.dart';
 import 'package:trackify/screens/dashboard/profile/profile.dart';
+import 'package:trackify/screens/dashboard/widgets/all_transactions.dart';
 import 'package:trackify/screens/dashboard/widgets/bidget_progress.dart';
 import 'package:trackify/screens/dashboard/widgets/dash_board_header.dart';
 import 'package:trackify/screens/dashboard/widgets/expense_pie_chart.dart';
@@ -72,6 +73,13 @@ class _DashboardScreenState extends State<DashboardScreen>
     super.dispose();
   }
 
+  void _openAllTransactions() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const AllTransactionsScreen()),
+    );
+  }
+
   Widget _buildHomeBody() {
     final dashboard = context.watch<DashboardProvider>();
     final budget = context.watch<BudgetProvider>();
@@ -102,7 +110,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           const SizedBox(height: 20),
           RecentTransactions(
             transactions: dashboard.recentTransactions,
-            onViewAll: () {},
+            onViewAll: _openAllTransactions,
           ),
           const SizedBox(height: 20),
           BudgetProgress(

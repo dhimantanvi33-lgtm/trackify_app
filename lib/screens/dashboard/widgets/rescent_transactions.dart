@@ -9,6 +9,7 @@ class TransactionItem {
   final IconData icon;
   final Color iconColor;
   final String time;
+  final DateTime date;
 
   const TransactionItem({
     required this.title,
@@ -18,6 +19,7 @@ class TransactionItem {
     required this.icon,
     required this.iconColor,
     required this.time,
+    required this.date,
   });
 }
 
@@ -71,30 +73,44 @@ class RecentTransactions extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          ...transactions.asMap().entries.map((entry) {
-            final i = entry.key;
-            final tx = entry.value;
-            return Column(
-              children: [
-                _TransactionRow(item: tx),
-                if (i < transactions.length - 1)
-                  Divider(
-                    color: AppColors.muted.withOpacity(0.1),
-                    height: 20,
-                    thickness: 1,
-                  ),
-              ],
-            );
-          }),
+          if (transactions.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Text(
+                'No transactions yet',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 13,
+                  color: AppColors.muted.withOpacity(0.6),
+                ),
+              ),
+            )
+          else
+            ...transactions.asMap().entries.map((entry) {
+              final i = entry.key;
+              final tx = entry.value;
+              return Column(
+                children: [
+                  TransactionRow(item: tx),
+                  if (i < transactions.length - 1)
+                    Divider(
+                      color: AppColors.muted.withOpacity(0.1),
+                      height: 20,
+                      thickness: 1,
+                    ),
+                ],
+              );
+            }),
         ],
       ),
     );
   }
 }
 
-class _TransactionRow extends StatelessWidget {
+/// Public so it can be reused by the "All Transactions" screen.
+class TransactionRow extends StatelessWidget {
   final TransactionItem item;
-  const _TransactionRow({required this.item});
+  const TransactionRow({super.key, required this.item});
 
   @override
   Widget build(BuildContext context) {
@@ -118,6 +134,7 @@ class _TransactionRow extends StatelessWidget {
             children: [
               Text(
                 item.title,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 14,
